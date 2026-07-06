@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Archetype — you don't monitor agents, you read your project</title>
+<meta name="description" content="Archetype is an agentic development environment where coding agents run in terminals, situated inline in your document tree. Place an agent where the work lives." />
+<style>
+:root{
+  --bg:#fbfaf8;
+  --panel:#ffffff;
+  --ink:#1a1917;
+  --ink-soft:#54514b;
+  --ink-faint:#8b877f;
+  --line:#e7e3dc;
+  --line-soft:#efece6;
+  --accent:#c2410c;      /* olivetti orange-red */
+  --accent-soft:#fdece3;
+  --term-bg:#1c1b19;
+  --term-ink:#e9e6df;
+  --term-green:#7fce8f;
+  --term-dim:#8f8b82;
+  --tree-hl:#f3efe8;
+  --radius:14px;
+  --maxw:1120px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#141311;
+    --panel:#1d1c19;
+    --ink:#f2efe9;
+    --ink-soft:#b6b1a8;
+    --ink-faint:#847f76;
+    --line:#312f2b;
+    --line-soft:#26241f;
+    --accent:#f97316;
+    --accent-soft:#2a1a10;
+    --term-bg:#0f0e0d;
+    --tree-hl:#26241f;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font);line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  font-feature-settings:"kern","liga","calt";
+}
+a{color:inherit}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  border-bottom:1px solid var(--line-soft)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.01em;font-size:16px}
+.brand .mark{width:22px;height:22px;border-radius:6px;background:var(--accent);
+  display:grid;place-items:center;color:#fff;font-family:var(--mono);font-size:13px;font-weight:700}
+.nav-links{display:flex;gap:26px;align-items:center;font-size:14.5px;color:var(--ink-soft)}
+.nav-links a{text-decoration:none}
+.nav-links a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
+  border:none;border-radius:9px;padding:9px 16px;font-size:14.5px;font-weight:600;
+  text-decoration:none;cursor:pointer;transition:transform .12s ease, filter .12s ease}
+.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ink-faint);filter:none}
+@media(max-width:720px){.nav-links a:not(.btn){display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding:74px 0 26px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--accent);
+  font-weight:600;letter-spacing:.02em;background:var(--accent-soft);
+  padding:5px 12px;border-radius:999px;margin-bottom:22px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+h1{font-size:clamp(34px,5.4vw,60px);line-height:1.03;letter-spacing:-.03em;
+  margin:0 0 20px;font-weight:680;max-width:16ch}
+h1 .fade{color:var(--ink-faint)}
+.lede{font-size:clamp(17px,2.1vw,20px);color:var(--ink-soft);max-width:56ch;margin:0 0 30px}
+.cta-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.cta-note{font-size:13.5px;color:var(--ink-faint)}
+
+/* ---------- product mock ---------- */
+.stage{margin:52px 0 10px;position:relative}
+.stage::before{content:"";position:absolute;inset:-40px -10% 30px;z-index:-1;
+  background:radial-gradient(60% 60% at 50% 0%, var(--accent-soft), transparent 70%);opacity:.7}
+.app{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;box-shadow:0 30px 60px -30px rgba(20,15,5,.28), 0 2px 8px rgba(20,15,5,.05)}
+.app-bar{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--line-soft);
+  background:color-mix(in srgb,var(--panel) 90%, var(--bg))}
+.tl{display:flex;gap:7px}
+.tl i{width:11px;height:11px;border-radius:50%;background:var(--line);display:block}
+.tl i:nth-child(1){background:#e06c56}.tl i:nth-child(2){background:#e2b04a}.tl i:nth-child(3){background:#6cbf72}
+.app-title{font-size:12.5px;color:var(--ink-faint);font-family:var(--mono);margin-left:6px}
+.app-body{display:grid;grid-template-columns:236px 1fr;min-height:460px}
+@media(max-width:760px){.app-body{grid-template-columns:1fr}.tree{display:none}}
+
+.tree{border-right:1px solid var(--line-soft);padding:14px 10px;font-size:13.5px;
+  background:color-mix(in srgb,var(--panel) 94%, var(--bg))}
+.tree .sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);
+  padding:4px 8px 8px;font-weight:600}
+.row{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:7px;color:var(--ink-soft);
+  cursor:default;position:relative}
+.row:hover{background:var(--tree-hl)}
+.row.active{background:var(--tree-hl);color:var(--ink);font-weight:550}
+.row.active::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2.5px;border-radius:2px;background:var(--accent)}
+.row .tw{width:14px;color:var(--ink-faint);font-size:10px}
+.row .ic{width:16px;text-align:center;opacity:.85}
+.indent{padding-left:20px}.indent2{padding-left:34px}
+.agent-dot{width:7px;height:7px;border-radius:50%;margin-left:auto;flex:none;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%, transparent)}
+.agent-dot.run{background:var(--accent);animation:pulse 1.6s ease-in-out infinite}
+.agent-dot.done{background:var(--term-green);box-shadow:0 0 0 3px color-mix(in srgb,var(--term-green) 20%, transparent)}
+.agent-dot.idle{background:var(--ink-faint);box-shadow:none;opacity:.5}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* doc */
+.doc{padding:30px 40px 40px;overflow:hidden}
+@media(max-width:760px){.doc{padding:24px}}
+.doc h2.dtitle{font-size:27px;letter-spacing:-.02em;margin:0 0 4px;font-weight:680}
+.doc .meta{font-size:12.5px;color:var(--ink-faint);margin-bottom:22px;font-family:var(--mono)}
+.doc p{font-size:15px;color:var(--ink-soft);margin:0 0 16px;max-width:62ch}
+.doc p .lead{color:var(--ink)}
+
+/* inline terminal block */
+.termblock{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:8px 0 22px;
+  background:var(--term-bg)}
+.term-head{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.06)}
+.term-head .chevron{color:var(--term-dim);font-size:11px;transition:transform .2s;cursor:pointer;user-select:none}
+.termblock.folded .chevron{transform:rotate(-90deg)}
+.term-head .agent{font-family:var(--mono);font-size:12.5px;color:var(--term-ink);font-weight:600}
+.term-head .tag{font-family:var(--mono);font-size:11px;color:var(--term-dim);
+  border:1px solid rgba(255,255,255,.12);border-radius:5px;padding:1px 7px}
+.term-head .status{margin-left:auto;font-family:var(--mono);font-size:11px;display:flex;align-items:center;gap:6px;color:var(--term-dim)}
+.term-head .status .s-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+.term-body{padding:13px 15px;font-family:var(--mono);font-size:12.7px;line-height:1.7;color:var(--term-ink);
+  max-height:300px;overflow:auto;transition:max-height .28s ease, padding .28s ease}
+.termblock.folded .term-body{max-height:0;padding-top:0;padding-bottom:0;overflow:hidden}
+.term-body .pr{color:var(--accent)}
+.term-body .ok{color:var(--term-green)}
+.term-body .dim{color:var(--term-dim)}
+.term-body .cursor{display:inline-block;width:7px;height:14px;background:var(--term-ink);
+  vertical-align:-2px;animation:blink 1.05s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.folded-hint{font-family:var(--mono);font-size:11.5px;color:var(--term-dim);padding:0 13px 10px;display:none}
+.termblock.folded .folded-hint{display:block}
+
+/* ---------- argument sections ---------- */
+section.band{padding:88px 0;border-top:1px solid var(--line-soft)}
+.kicker{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.03em;margin-bottom:14px}
+.band h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.022em;line-height:1.1;margin:0 0 18px;font-weight:660;max-width:20ch}
+.band .sub{font-size:17px;color:var(--ink-soft);max-width:62ch;margin:0}
+
+.steps{display:grid;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);
+  border-radius:var(--radius);overflow:hidden;margin-top:44px}
+.step{background:var(--panel);padding:30px 30px;display:grid;grid-template-columns:44px 1fr;gap:20px;align-items:start}
+.step .n{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;
+  border:1.5px solid var(--accent-soft);background:var(--accent-soft);border-radius:9px;
+  width:44px;height:44px;display:grid;place-items:center}
+.step h3{margin:2px 0 8px;font-size:19px;letter-spacing:-.01em;font-weight:640}
+.step p{margin:0;color:var(--ink-soft);font-size:15px;max-width:64ch}
+.step p em{color:var(--ink);font-style:normal;font-weight:550}
+
+.quote{font-size:clamp(22px,3vw,30px);line-height:1.3;letter-spacing:-.02em;font-weight:560;
+  max-width:22ch;margin:0}
+.quote .hl{color:var(--accent)}
+.quote-src{margin-top:22px;font-size:14px;color:var(--ink-faint)}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+@media(max-width:820px){.cols{grid-template-columns:1fr;gap:28px}}
+
+/* compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:40px}
+@media(max-width:680px){.compare{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:var(--radius);padding:24px;background:var(--panel)}
+.card.bad{border-style:dashed}
+.card .lab{font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:14px}
+.card.bad .lab{color:var(--ink-faint)}
+.card.good .lab{color:var(--accent)}
+.card ul{margin:0;padding:0;list-style:none}
+.card li{display:flex;gap:10px;padding:7px 0;font-size:14.5px;color:var(--ink-soft);border-top:1px solid var(--line-soft)}
+.card li:first-child{border-top:none}
+.card li .g{flex:none;font-family:var(--mono)}
+.card.bad li .g{color:var(--ink-faint)}
+.card.good li .g{color:var(--term-green)}
+
+/* ---------- final cta ---------- */
+.final{padding:96px 0;text-align:center;border-top:1px solid var(--line-soft)}
+.final h2{font-size:clamp(28px,4vw,46px);letter-spacing:-.025em;margin:0 auto 18px;max-width:18ch;font-weight:680;line-height:1.05}
+.final p{color:var(--ink-soft);font-size:18px;max-width:50ch;margin:0 auto 30px}
+footer{border-top:1px solid var(--line-soft);padding:34px 0;color:var(--ink-faint);font-size:13.5px}
+.foot-in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.foot-in a{text-decoration:none;color:var(--ink-faint)}
+.foot-in a:hover{color:var(--ink-soft)}
+.disclaim{font-size:12px;color:var(--ink-faint);opacity:.7;margin-top:6px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <div class="brand"><span class="mark">A</span> Archetype</div>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#why">Why a tree</a>
+      <a href="#scale">Scaling</a>
+      <a class="btn" href="#access">Request access</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> The agentic development environment</span>
+    <h1>You don't monitor agents. <span class="fade">You read your project.</span></h1>
+    <p class="lede">Archetype runs coding agents — Claude Code, Codex CLI — in terminals that live <em>inline</em> in a Notion-like document tree. You don't brief an agent and babysit its tab. You <strong>place</strong> it where the work lives, and its position tells you what it's doing and what it can touch.</p>
+    <div class="cta-row">
+      <a class="btn" href="#access">Request access →</a>
+      <a class="btn ghost" href="#how">See how it works</a>
+      <span class="cta-note">One page. One terminal. The prose above the fence is the spec.</span>
+    </div>
+
+    <!-- LIVE MOCK: the product demonstrating itself -->
+    <div class="stage">
+      <div class="app">
+        <div class="app-bar">
+          <span class="tl"><i></i><i></i><i></i></span>
+          <span class="app-title">archetype — ~/product/Archetype</span>
+        </div>
+        <div class="app-body">
+          <aside class="tree">
+            <div class="sec">Workspace</div>
+            <div class="row"><span class="tw">▸</span><span class="ic">📄</span> Vision</div>
+            <div class="row active"><span class="tw">▾</span><span class="ic">📄</span> Landing Page</div>
+            <div class="row indent"><span class="tw"></span><span class="ic">◻︎</span> Hero copy <span class="agent-dot run" title="agent running"></span></div>
+            <div class="row indent"><span class="tw"></span><span class="ic">◻︎</span> Pricing <span class="agent-dot idle" title="idle"></span></div>
+            <div class="row"><span class="tw">▾</span><span class="ic">📄</span> Situated Agents</div>
+            <div class="row indent"><span class="tw"></span><span class="ic">◻︎</span> Scoping model <span class="agent-dot done" title="done"></span></div>
+            <div class="row indent"><span class="tw">▸</span><span class="ic">📁</span> research</div>
+            <div class="row"><span class="tw">▸</span><span class="ic">📄</span> Prototypes</div>
+            <div class="row indent"><span class="tw"></span><span class="ic">◻︎</span> olivetti <span class="agent-dot run"></span></div>
+          </aside>
+
+          <main class="doc">
+            <h2 class="dtitle">Landing Page</h2>
+            <div class="meta">edited by you · 2 agents placed here</div>
+            <p><span class="lead">Archetype needs a landing page, and for that it needs a narrative.</span> The move that defines the product: coding agents run in terminals situated inline to a document tree. The paragraph you're reading is the brief. The terminal below is the agent working on it — placed right under the section it owns.</p>
+
+            <div class="termblock" id="tb1">
+              <div class="term-head" onclick="toggleFold('tb1')">
+                <span class="chevron">▾</span>
+                <span class="agent">hero-copy</span>
+                <span class="tag">Claude Code</span>
+                <span class="status"><span class="s-dot"></span> running</span>
+              </div>
+              <div class="term-body" id="term1"></div>
+              <div class="folded-hint">▸ folded · agent still legible from its place in the tree</div>
+            </div>
+
+            <p>Fold the terminal and the work doesn't vanish — its <em>position</em> still tells you its purpose and its blast radius. That's the whole idea: even a silent agent is legible, because you placed it.</p>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- THE ARGUMENT -->
+<section class="band" id="scale">
+  <div class="wrap">
+    <div class="kicker">The bottleneck</div>
+    <h2>Anyone can spawn fifty agents. Nobody can manage them.</h2>
+    <p class="sub">Coordination, not compute, is the wall. The interfaces we have are flat — chat tabs, terminal lists, PR queues — and flat structures cap out at the five-to-seven contexts a human can actually hold. GitHub's own framing for its multi-agent prototype admits it: <em>"one developer, two dozen agents, zero alignment."</em></p>
+
+    <div class="compare">
+      <div class="card bad">
+        <div class="lab">Flat tools</div>
+        <ul>
+          <li><span class="g">✗</span> N agents = N interleaved transcripts to read</li>
+          <li><span class="g">✗</span> Every session needs an invented name</li>
+          <li><span class="g">✗</span> Recency-sorted lists destroy meaning</li>
+          <li><span class="g">✗</span> Relations between agents' work are unrepresentable</li>
+          <li><span class="g">✗</span> Transcripts report what the agent <em>said</em>, not what the project <em>is</em></li>
+        </ul>
+      </div>
+      <div class="card good">
+        <div class="lab">Archetype</div>
+        <ul>
+          <li><span class="g">✓</span> Place an agent — the place remembers for you</li>
+          <li><span class="g">✓</span> Position encodes purpose, scope, and blast radius</li>
+          <li><span class="g">✓</span> Read up, know your siblings, write down</li>
+          <li><span class="g">✓</span> Agent #51 costs no more coordination than agent #1</li>
+          <li><span class="g">✓</span> "What are my agents doing?" becomes "what changed in my project?"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="how">
+  <div class="wrap">
+    <div class="kicker">The mechanism</div>
+    <h2>Placement, not reporting.</h2>
+    <p class="sub">The document tree is your externalized mental model — you built it, so its structure is already in your head. Spawning an agent <em>at a place</em> means the geometry does the remembering.</p>
+
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div>
+        <h3>Legibility breaks before control does</h3>
+        <p>Scaling agents isn't a control problem, it's a <em>reading</em> problem. One human loses the ability to understand what all her agents are doing long before she loses the ability to stop them. Attention cost in flat tools is O(N).</p>
+      </div></div>
+      <div class="step"><div class="n">2</div><div>
+        <h3>Hierarchy is the ancient fix — the doc tree is its friendliest form</h3>
+        <p>Org charts, filesystems, Wikipedia: every structure humans use to scale coordination is a tree with scoped responsibility. Situating an agent scopes <em>what it knows</em> (read up), <em>who it knows</em> (siblings), and <em>what it may touch</em> (write down). Lexical scoping — for labor.</p>
+      </div></div>
+      <div class="step"><div class="n">3</div><div>
+        <h3>You place agents; you don't brief them</h3>
+        <p>The place remembers what it's doing and how its scope relates to everything else — as <em>visible geometry</em> (under this section, next to that agent), not facts you hold in your head. A memory palace you were already building anyway.</p>
+      </div></div>
+      <div class="step"><div class="n">4</div><div>
+        <h3>Agents write their work out at their position</h3>
+        <p>Placement is the index; the agent writing back where it sits is the report. Together they collapse "what are my agents doing?" into "what's changed in my project?" — a question humans already answer at scale by reading, folding, and zooming a tree.</p>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="why">
+  <div class="wrap cols">
+    <div>
+      <div class="kicker">The payoff</div>
+      <p class="quote">Attention scales with <span class="hl">the tree</span>, not the <span class="hl">agent count</span>.</p>
+      <div class="quote-src">And because humans and agents coordinate through the same substrate, more humans scale the same way. Wikipedia is the existence proof.</div>
+    </div>
+    <div>
+      <p class="sub">The big vision doesn't land as hype — it lands as <em>relief</em>. Relief from the inbox of terminal tabs you're afraid of. You spin up the fifty-first agent the way you'd add a bullet to an outline: you put it where it belongs, fold it away, and trust that the place will tell you what it's doing when you come back to read.</p>
+      <p class="sub">Start with one page and one terminal. The curve is stated; the first point is honest.</p>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="access">
+  <div class="wrap">
+    <h2>Stop reading transcripts. Start reading your project.</h2>
+    <p>Archetype is in early access. One page, one terminal — then as many agents as your tree can hold.</p>
+    <div class="cta-row" style="justify-content:center">
+      <a class="btn" href="mailto:hello@archetype.dev?subject=Archetype%20early%20access">Request access →</a>
+      <a class="btn ghost" href="#how">Read the argument</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <div>
+      <div class="brand"><span class="mark">A</span> Archetype</div>
+      <div class="disclaim">Prototype built in Olivetti. Narrative and copy are a working draft.</div>
+    </div>
+    <div>
+      <a href="#how">How it works</a> &nbsp;·&nbsp;
+      <a href="#scale">Scaling</a> &nbsp;·&nbsp;
+      <a href="#access">Early access</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function toggleFold(id){document.getElementById(id).classList.toggle('folded')}
+
+/* Type the inline agent terminal — the product demonstrating itself. */
+const lines = [
+  {t:'<span class="pr">$</span> claude "tighten the hero headline — one line, no hype"', d:30},
+  {t:'<span class="dim">· reading up the tree: Vision → Landing Page</span>', d:16},
+  {t:'<span class="dim">· scope: this section only (write down)</span>', d:16},
+  {t:'', d:6},
+  {t:'  Draft A  <span class="dim">You don\'t monitor agents. You read your project.</span>', d:14},
+  {t:'  Draft B  <span class="dim">Place an agent where the work lives.</span>', d:14},
+  {t:'', d:6},
+  {t:'<span class="ok">✓</span> wrote "Hero copy" · folded, still visible in tree', d:20},
+];
+const el = document.getElementById('term1');
+let li=0, ci=0, buf='';
+function tick(){
+  if(li>=lines.length){
+    el.innerHTML = buf + '<span class="cursor"></span>';
+    return; // hold with blinking cursor
+  }
+  const line = lines[li];
+  // render raw text char-by-char but commit whole html tags at once by using textContent slices of a temp
+  if(ci===0){ line._plain = line.t.replace(/<[^>]+>/g,''); }
+  ci++;
+  // simple approach: reveal progressively by cutting the HTML at plain-char boundaries
+  const shown = revealHtml(line.t, ci);
+  el.innerHTML = buf + shown + '<span class="cursor"></span>';
+  el.scrollTop = el.scrollHeight;
+  if(ci >= line._plain.length){
+    buf += line.t + '<br>';
+    li++; ci=0;
+    setTimeout(tick, 220);
+  } else {
+    setTimeout(tick, line.d);
+  }
+}
+// reveal first n visible (non-tag) chars of an html string, keeping tags intact
+function revealHtml(html, n){
+  let out='', count=0, i=0;
+  while(i<html.length && count<n){
+    if(html[i]==='<'){ const j=html.indexOf('>',i); out+=html.slice(i,j+1); i=j+1; }
+    else { out+=html[i]; i++; count++; }
+  }
+  // close any open span for safety
+  const opens=(out.match(/<span/g)||[]).length, closes=(out.match(/<\/span>/g)||[]).length;
+  return out + '</span>'.repeat(Math.max(0,opens-closes));
+}
+window.addEventListener('load', ()=> setTimeout(tick, 600));
+</script>
+</body>
+</html>
